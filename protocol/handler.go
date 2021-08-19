@@ -4,11 +4,11 @@ import (
 	"errors"
 	"github.com/golang/protobuf/proto"
 	"log"
-	"nitrohsu.com/futu/api/Common"
-	"nitrohsu.com/futu/api/InitConnect"
-	"nitrohsu.com/futu/api/KeepAlive"
-	"nitrohsu.com/futu/api/Qot_GetSubInfo"
-	"nitrohsu.com/futu/api/Trd_UnlockTrade"
+	"nitrohsu.com/futu/api/common"
+	"nitrohsu.com/futu/api/initconnect"
+	"nitrohsu.com/futu/api/keepalive"
+	"nitrohsu.com/futu/api/qotgetsubinfo"
+	"nitrohsu.com/futu/api/trdunlocktrade"
 	"time"
 )
 
@@ -26,7 +26,7 @@ func (handler *Handler) Init(writer chan *Message, reader chan *Message, pwd str
 	handler.quit = make(chan bool, 1)
 	handler.Resp = make(chan *Message, 10)
 	// init connect
-	initConnectRequest(writer, "123", 300, true, 0, Common.PacketEncAlgo_PacketEncAlgo_None)
+	initConnectRequest(writer, "123", 300, true, 0, common.PacketEncAlgo_PacketEncAlgo_None)
 	// response
 	go handler.response(writer, reader, pwd)
 	return nil
@@ -37,11 +37,11 @@ func (handler Handler) Close() {
 	time.Sleep(10 * time.Second)
 }
 
-func initConnectRequest(writer chan *Message, clientId string, clientVersion int32, notify bool, format int32, encodeAlgo Common.PacketEncAlgo) {
+func initConnectRequest(writer chan *Message, clientId string, clientVersion int32, notify bool, format int32, encodeAlgo common.PacketEncAlgo) {
 	ftProto := Message{
 		ProtoID: uint32(P_InitConnect),
-		Body: &InitConnect.Request{
-			C2S: &InitConnect.C2S{
+		Body: &initconnect.Request{
+			C2S: &initconnect.C2S{
 				ClientID:      proto.String(clientId),
 				ClientVer:     proto.Int32(clientVersion),
 				RecvNotify:    proto.Bool(notify),
@@ -66,8 +66,8 @@ func (handler *Handler) keepAliveFunction(writer chan *Message, intervalSeconds 
 			case <-handler.wakeup:
 				writer <- &Message{
 					ProtoID: uint32(P_KeepAlive),
-					Body: &KeepAlive.Request{
-						C2S: &KeepAlive.C2S{
+					Body: &keepalive.Request{
+						C2S: &keepalive.C2S{
 							Time: proto.Int64(time.Now().Unix()),
 						},
 					},
@@ -89,7 +89,7 @@ func (handler *Handler) response(writer chan *Message, reader chan *Message, pwd
 			switch msg.ProtoID {
 			case P_InitConnect:
 				{
-					body, ok := msg.Body.(*InitConnect.Response)
+					body, ok := msg.Body.(*initconnect.Response)
 					if !ok || *body.ErrCode != 0 {
 						log.Printf("init connect resp failed, err=%s", *body.RetMsg)
 						return
@@ -101,7 +101,7 @@ func (handler *Handler) response(writer chan *Message, reader chan *Message, pwd
 				}
 			case P_KeepAlive:
 				{
-					body, ok := msg.Body.(*KeepAlive.Response)
+					body, ok := msg.Body.(*keepalive.Response)
 					log.Printf("read content, retErr=%d, retType=%d, retMsg=%s", *body.ErrCode, *body.RetType, *body.RetMsg)
 					if !ok || *body.ErrCode != 0 {
 						log.Printf("keepAlive resp failed, err=%s", *body.RetMsg)
@@ -118,8 +118,8 @@ func (handler *Handler) response(writer chan *Message, reader chan *Message, pwd
 func (handler *Handler) unlockAccount(pwd string, writer chan *Message) {
 	writer <- &Message{
 		ProtoID: uint32(P_Trd_UnlockTrade),
-		Body: &Trd_UnlockTrade.Request{
-			C2S: &Trd_UnlockTrade.C2S{
+		Body: &trdunlocktrade.Request{
+			C2S: &trdunlocktrade.C2S{
 				Unlock: proto.Bool(true),
 				PwdMD5: proto.String(pwd),
 			},
@@ -129,8 +129,8 @@ func (handler *Handler) unlockAccount(pwd string, writer chan *Message) {
 func (handler *Handler) getSubInfo(writer chan *Message) {
 	writer <- &Message{
 		ProtoID: uint32(P_Qot_GetSubInfo),
-		Body: &Qot_GetSubInfo.Request{
-			C2S: &Qot_GetSubInfo.C2S{
+		Body: &qotgetsubinfo.Request{
+			C2S: &qotgetsubinfo.C2S{
 				IsReqAllConn: proto.Bool(false),
 			},
 		},

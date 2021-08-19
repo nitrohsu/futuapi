@@ -1,11 +1,13 @@
 syntax = "proto2";
 package Qot_GetCodeChange;
 option java_package = "com.futu.openapi.pb";
+option go_package = "nitrohsu.com/futu/api/qotgetcodechange";
 
 import "Common.proto";
 import "Qot_Common.proto";
 
-enum CodeChangeType {
+enum CodeChangeType
+{
   CodeChangeType_Unkown = 0; //未知
   CodeChangeType_GemToMain = 1; //创业板转主板
   CodeChangeType_Unpaid = 2; //买卖未缴款供股权
@@ -17,7 +19,8 @@ enum CodeChangeType {
   CodeChangeType_Other = 8; //其他
 }
 
-message CodeChangeInfo {
+message CodeChangeInfo
+{
   required int32 type = 1; //CodeChangeType,代码变化或者新增临时代码的事件类型
   required Qot_Common.Security security = 2; //主代码，在创业板转主板中表示主板
   required Qot_Common.Security relatedSecurity = 3; //关联代码，在创业板转主板中表示创业板，在剩余事件中表示临时代码
@@ -29,35 +32,41 @@ message CodeChangeInfo {
   optional double endTimestamp = 9; //结束时间戳，在创业板转主板事件不存在该字段，在剩余事件表示临时代码交易结束时间
 }
 
-enum TimeFilterType {
+enum TimeFilterType
+{
   TimeFilterType_Unknow = 0;
   TimeFilterType_Public = 1; //根据公布时间过滤
   TimeFilterType_Effective = 2; //根据生效时间过滤
   TimeFilterType_End = 3; //根据结束时间过滤
 }
 
-message TimeFilter {
+message TimeFilter
+{
   required int32 type = 1; //TimeFilterType, 过滤类型
   optional string beginTime = 2; //开始时间点
   optional string endTime = 3; //结束时间点
 }
 
-message C2S {
+message C2S
+{
   optional int32 placeHolder = 1; //占位
   repeated Qot_Common.Security securityList = 2; //根据股票筛选
   repeated TimeFilter timeFilterList = 3; //根据时间筛选
   repeated int32 typeList = 4; //CodeChangeType，根据类型筛选
 }
 
-message S2C {
+message S2C
+{
   repeated CodeChangeInfo codeChangeList = 1; //股票代码更换信息，目前仅有港股数据
 }
 
-message Request {
+message Request
+{
   required C2S c2s = 1;
 }
 
-message Response {
+message Response
+{
   required int32 retType = 1 [default = -400]; //RetType,返回结果
   optional string retMsg = 2;
   optional int32 errCode = 3;

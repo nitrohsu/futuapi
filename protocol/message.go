@@ -8,13 +8,13 @@ import (
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	"log"
-	"nitrohsu.com/futu/api/InitConnect"
-	"nitrohsu.com/futu/api/KeepAlive"
-	"nitrohsu.com/futu/api/Qot_GetOrderBook"
-	"nitrohsu.com/futu/api/Qot_GetSubInfo"
-	"nitrohsu.com/futu/api/Qot_Sub"
-	"nitrohsu.com/futu/api/Trd_GetHistoryOrderList"
-	"nitrohsu.com/futu/api/Trd_UnlockTrade"
+	"nitrohsu.com/futu/api/initconnect"
+	"nitrohsu.com/futu/api/keepalive"
+	"nitrohsu.com/futu/api/qotgetorderbook"
+	"nitrohsu.com/futu/api/qotgetsubinfo"
+	"nitrohsu.com/futu/api/qotsub"
+	"nitrohsu.com/futu/api/trdgethistoryorderlist"
+	"nitrohsu.com/futu/api/trdunlocktrade"
 	"reflect"
 )
 
@@ -217,19 +217,19 @@ func (message *Message) Read(reader *bufio.Reader) (int, error) {
 func newResp(protoId uint32) proto.Message {
 	switch protoId {
 	case P_InitConnect:
-		return &InitConnect.Response{}
+		return &initconnect.Response{}
 	case P_KeepAlive:
-		return &KeepAlive.Response{}
+		return &keepalive.Response{}
 	case P_Qot_GetOrderBook:
-		return &Qot_GetOrderBook.Response{}
+		return &qotgetorderbook.Response{}
 	case P_Qot_Sub:
-		return &Qot_Sub.Response{}
+		return &qotsub.Response{}
 	case P_Qot_GetSubInfo:
-		return &Qot_GetSubInfo.Response{}
+		return &qotgetsubinfo.Response{}
 	case P_Trd_GetHistoryOrderList:
-		return &Trd_GetHistoryOrderList.Response{}
+		return &trdgethistoryorderlist.Response{}
 	case P_Trd_UnlockTrade:
-		return &Trd_UnlockTrade.Response{}
+		return &trdunlocktrade.Response{}
 	}
 	return nil
 }

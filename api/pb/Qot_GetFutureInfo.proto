@@ -1,18 +1,21 @@
 syntax = "proto2";
 package Qot_GetFutureInfo;
 option java_package = "com.futu.openapi.pb";
+option go_package = "nitrohsu.com/futu/api/qotgetfutureinfo";
 
 import "Common.proto";
 import "Qot_Common.proto";
 
 //交易时间
-message TradeTime {
+message TradeTime
+{
   optional double begin = 1; // 开始时间,以分钟为单位
   optional double end = 2; // 结束时间,以分钟为单位
 }
 
 //期货合约资料的列表
-message FutureInfo {
+message FutureInfo
+{
   required string name = 1; // 合约名称
   required Qot_Common.Security security = 2; // 合约代码
   required string lastTradeTime = 3; //最后交易日，只有非主连期货合约才有该字段
@@ -32,19 +35,23 @@ message FutureInfo {
   required string exchangeFormatUrl = 17; //交易所规格
 }
 
-message C2S {
+message C2S
+{
   repeated Qot_Common.Security securityList = 1; //股票列表
 }
 
-message S2C {
+message S2C
+{
   repeated FutureInfo futureInfoList = 1; //期货合约资料的列表
 }
 
-message Request {
+message Request
+{
   required C2S c2s = 1;
 }
 
-message Response {
+message Response
+{
   required int32 retType = 1 [default = -400]; //RetType,返回结果
   optional string retMsg = 2;
   optional int32 errCode = 3;

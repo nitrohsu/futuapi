@@ -3,13 +3,13 @@ package quote
 import (
 	"github.com/golang/protobuf/proto"
 	"log"
-	"nitrohsu.com/futu/api/Qot_Common"
-	"nitrohsu.com/futu/api/Qot_GetOrderBook"
-	"nitrohsu.com/futu/api/Qot_GetSubInfo"
-	"nitrohsu.com/futu/api/Qot_Sub"
-	"nitrohsu.com/futu/api/Trd_Common"
-	"nitrohsu.com/futu/api/Trd_GetHistoryOrderList"
-	"nitrohsu.com/futu/api/Trd_UnlockTrade"
+	"nitrohsu.com/futu/api/qotcommon"
+	"nitrohsu.com/futu/api/qotgetorderbook"
+	"nitrohsu.com/futu/api/qotgetsubinfo"
+	"nitrohsu.com/futu/api/qotsub"
+	"nitrohsu.com/futu/api/trdcommon"
+	"nitrohsu.com/futu/api/trdgethistoryorderlist"
+	"nitrohsu.com/futu/api/trdunlocktrade"
 	"nitrohsu.com/futu/conf"
 	"nitrohsu.com/futu/netmanager"
 	"nitrohsu.com/futu/protocol"
@@ -20,8 +20,8 @@ type Quote struct {
 	Config    conf.Config
 	NetMgr    *netmanager.NetManager
 	FutuState *protocol.Handler
-	SubStock  []*Qot_Common.Security
-	account   map[Trd_Common.TrdMarket]*Trd_Common.TrdHeader
+	SubStock  []*qotcommon.Security
+	account   map[trdcommon.TrdMarket]*trdcommon.TrdHeader
 	password  string
 	unlock    bool
 }
@@ -37,16 +37,16 @@ func (quote *Quote) Start() (err error) {
 		return
 	}
 
-	quote.account = make(map[Trd_Common.TrdMarket]*Trd_Common.TrdHeader)
-	quote.account[Trd_Common.TrdMarket_TrdMarket_US] = &Trd_Common.TrdHeader{
-		TrdEnv:    proto.Int32(int32(Trd_Common.TrdEnv_TrdEnv_Real)),
+	quote.account = make(map[trdcommon.TrdMarket]*trdcommon.TrdHeader)
+	quote.account[trdcommon.TrdMarket_TrdMarket_US] = &trdcommon.TrdHeader{
+		TrdEnv:    proto.Int32(int32(trdcommon.TrdEnv_TrdEnv_Real)),
 		AccID:     proto.Uint64(0),
-		TrdMarket: proto.Int32(int32(Trd_Common.TrdMarket_TrdMarket_US)),
+		TrdMarket: proto.Int32(int32(trdcommon.TrdMarket_TrdMarket_US)),
 	}
-	quote.account[Trd_Common.TrdMarket_TrdMarket_HK] = &Trd_Common.TrdHeader{
-		TrdEnv:    proto.Int32(int32(Trd_Common.TrdEnv_TrdEnv_Real)),
+	quote.account[trdcommon.TrdMarket_TrdMarket_HK] = &trdcommon.TrdHeader{
+		TrdEnv:    proto.Int32(int32(trdcommon.TrdEnv_TrdEnv_Real)),
 		AccID:     proto.Uint64(0),
-		TrdMarket: proto.Int32(int32(Trd_Common.TrdMarket_TrdMarket_HK)),
+		TrdMarket: proto.Int32(int32(trdcommon.TrdMarket_TrdMarket_HK)),
 	}
 	quote.password = "MD5 YOUR PASSWORD"
 	quote.FutuState = &protocol.Handler{}
@@ -61,15 +61,15 @@ func (quote *Quote) Start() (err error) {
 			case msg := <-quote.FutuState.Resp:
 				switch msg.ProtoID {
 				case protocol.P_Qot_Sub:
-					quote.subResponse(msg.Body.(*Qot_Sub.Response))
+					quote.subResponse(msg.Body.(*qotsub.Response))
 				case protocol.P_Qot_GetSubInfo:
-					quote.subInfoListResponse(msg.Body.(*Qot_GetSubInfo.Response))
+					quote.subInfoListResponse(msg.Body.(*qotgetsubinfo.Response))
 				case protocol.P_Trd_GetOrderList:
-					quote.realOrderListResponse(msg.Body.(*Qot_GetOrderBook.Response))
+					quote.realOrderListResponse(msg.Body.(*qotgetorderbook.Response))
 				case protocol.P_Trd_GetHistoryOrderList:
-					quote.historyOrderListResponse(msg.Body.(*Trd_GetHistoryOrderList.Response))
+					quote.historyOrderListResponse(msg.Body.(*trdgethistoryorderlist.Response))
 				case protocol.P_Trd_UnlockTrade:
-					quote.unlockTradeResponse(msg.Body.(*Trd_UnlockTrade.Response))
+					quote.unlockTradeResponse(msg.Body.(*trdunlocktrade.Response))
 				}
 			}
 		}
@@ -83,8 +83,8 @@ func (quote *Quote) Start() (err error) {
 
 func (quote *Quote) realOrderListRequest(writer chan *protocol.Message) {
 
-	stock := &Qot_Common.Security{
-		Market: proto.Int32(int32(Qot_Common.QotMarket_QotMarket_US_Security)),
+	stock := &qotcommon.Security{
+		Market: proto.Int32(int32(qotcommon.QotMarket_QotMarket_US_Security)),
 		Code:   proto.String("BA"),
 	}
 	exist := false
@@ -100,28 +100,28 @@ func (quote *Quote) realOrderListRequest(writer chan *protocol.Message) {
 	}
 	writer <- &protocol.Message{
 		ProtoID: protocol.P_Qot_GetOrderBook,
-		Body: &Qot_GetOrderBook.Request{
-			C2S: &Qot_GetOrderBook.C2S{
+		Body: &qotgetorderbook.Request{
+			C2S: &qotgetorderbook.C2S{
 				Num:      proto.Int32(10),
 				Security: stock,
 			}},
 	}
 }
 
-func (quote *Quote) historyOrderListRequest(markets []Trd_Common.TrdMarket, writer chan *protocol.Message) {
+func (quote *Quote) historyOrderListRequest(markets []trdcommon.TrdMarket, writer chan *protocol.Message) {
 
 	if markets == nil {
-		markets = make([]Trd_Common.TrdMarket, 2)
-		markets[0] = Trd_Common.TrdMarket_TrdMarket_US
-		markets[1] = Trd_Common.TrdMarket_TrdMarket_HK
+		markets = make([]trdcommon.TrdMarket, 2)
+		markets[0] = trdcommon.TrdMarket_TrdMarket_US
+		markets[1] = trdcommon.TrdMarket_TrdMarket_HK
 	}
 	for _, market := range markets {
 		writer <- &protocol.Message{
 			ProtoID: protocol.P_Trd_GetHistoryOrderList,
-			Body: &Trd_GetHistoryOrderList.Request{
-				C2S: &Trd_GetHistoryOrderList.C2S{
+			Body: &trdgethistoryorderlist.Request{
+				C2S: &trdgethistoryorderlist.C2S{
 					Header: quote.account[market],
-					FilterConditions: &Trd_Common.TrdFilterConditions{
+					FilterConditions: &trdcommon.TrdFilterConditions{
 						CodeList: []string{},
 						IdList:   []uint64{},
 						//YYYY-MM-DD HH:MM:SS
@@ -132,7 +132,7 @@ func (quote *Quote) historyOrderListRequest(markets []Trd_Common.TrdMarket, writ
 		}
 	}
 }
-func (quote *Quote) realOrderListResponse(msg *Qot_GetOrderBook.Response) {
+func (quote *Quote) realOrderListResponse(msg *qotgetorderbook.Response) {
 	if msg.GetErrCode() == 0 {
 		orderList := msg.S2C.OrderBookAskList
 		log.Printf("%x", orderList)
@@ -141,19 +141,19 @@ func (quote *Quote) realOrderListResponse(msg *Qot_GetOrderBook.Response) {
 	}
 }
 
-func (quote *Quote) historyOrderListResponse(msg *Trd_GetHistoryOrderList.Response) {
+func (quote *Quote) historyOrderListResponse(msg *trdgethistoryorderlist.Response) {
 	if msg.GetErrCode() == 0 {
 		header := msg.S2C.GetHeader()
-		log.Printf("accId=%d, market=%s, env=%s", header.GetAccID(), Trd_Common.TrdMarket_name[header.GetTrdMarket()], Trd_Common.TrdEnv_name[header.GetTrdEnv()])
+		log.Printf("accId=%d, market=%s, env=%s", header.GetAccID(), trdcommon.TrdMarket_name[header.GetTrdMarket()], trdcommon.TrdEnv_name[header.GetTrdEnv()])
 		orderList := msg.S2C.GetOrderList()
 		for _, order := range orderList {
 			log.Printf("%s,%s,%s,%d,%s,%s,%s,%s,%f,%f",
 				order.GetCreateTime(),
-				Trd_Common.TrdMarket_name[header.GetTrdMarket()],
+				trdcommon.TrdMarket_name[header.GetTrdMarket()],
 				order.GetUpdateTime(),
 				order.GetOrderID(),
-				Trd_Common.OrderStatus_name[order.GetOrderStatus()],
-				Trd_Common.TrdSide_name[order.GetTrdSide()],
+				trdcommon.OrderStatus_name[order.GetOrderStatus()],
+				trdcommon.TrdSide_name[order.GetTrdSide()],
 				order.GetCode(),
 				order.GetName(),
 				order.GetPrice(),
@@ -164,22 +164,22 @@ func (quote *Quote) historyOrderListResponse(msg *Trd_GetHistoryOrderList.Respon
 	}
 }
 
-func subRequest(stock *Qot_Common.Security, writer chan *protocol.Message) {
+func subRequest(stock *qotcommon.Security, writer chan *protocol.Message) {
 	writer <- &protocol.Message{
 		ProtoID: protocol.P_Qot_Sub,
-		Body: &Qot_Sub.Request{
-			C2S: &Qot_Sub.C2S{
+		Body: &qotsub.Request{
+			C2S: &qotsub.C2S{
 				IsFirstPush:  proto.Bool(false),
 				IsSubOrUnSub: proto.Bool(true),
-				SecurityList: []*Qot_Common.Security{stock},
+				SecurityList: []*qotcommon.Security{stock},
 				SubTypeList: []int32{
-					int32(Qot_Common.SubType_SubType_OrderBook),
-					int32(Qot_Common.SubType_SubType_OrderDetail)},
+					int32(qotcommon.SubType_SubType_OrderBook),
+				},
 			}},
 	}
 }
 
-func (quote *Quote) subResponse(msg *Qot_Sub.Response) {
+func (quote *Quote) subResponse(msg *qotsub.Response) {
 	if *msg.ErrCode == 0 {
 		log.Printf("sub succes")
 	} else {
@@ -187,7 +187,7 @@ func (quote *Quote) subResponse(msg *Qot_Sub.Response) {
 	}
 }
 
-func (quote *Quote) subInfoListResponse(msg *Qot_GetSubInfo.Response) {
+func (quote *Quote) subInfoListResponse(msg *qotgetsubinfo.Response) {
 	if *msg.ErrCode == 0 {
 		connSubInfoList := msg.S2C.ConnSubInfoList
 		for _, connSubInfo := range connSubInfoList {
@@ -203,7 +203,7 @@ func (quote *Quote) subInfoListResponse(msg *Qot_GetSubInfo.Response) {
 	}
 }
 
-func (quote *Quote) unlockTradeResponse(msg *Trd_UnlockTrade.Response) {
+func (quote *Quote) unlockTradeResponse(msg *trdunlocktrade.Response) {
 	if *msg.ErrCode == 0 {
 		quote.unlock = true
 		log.Printf("unlockTrade success")
